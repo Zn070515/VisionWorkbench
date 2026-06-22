@@ -55,7 +55,6 @@ class TrainingManager:
         """创建训练任务记录，返回 task_id。"""
         db = get_db()
         task_dir = self._training_dir / str(int(time.time()))
-        task_dir.mkdir(parents=True, exist_ok=True)
         log_path = str(task_dir / "train.log")
         results_path = str(task_dir / "results")
         row_id = db.insert("training_task", {
@@ -67,6 +66,8 @@ class TrainingManager:
             "results_path": results_path,
             "status": "pending",
         })
+        # DB 插入成功后再创建磁盘目录，避免孤儿目录
+        task_dir.mkdir(parents=True, exist_ok=True)
         return row_id
 
     def launch(self, task_id: int) -> bool:
@@ -89,13 +90,16 @@ class TrainingManager:
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = open(log_path, "w")
 
-        process = subprocess.Popen(
-            cmd,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            cwd=str(log_dir),
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
-        )
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                cwd=str(log_dir),
+                start_new_session=True,
+            )
+        finally:
+            log_file.close()
 
         db.update("training_task", {
             "status": "running",
@@ -118,9 +122,10 @@ class TrainingManager:
         if pid:
             try:
                 if sys.platform == "win32":
-                    subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], capture_output=True)
+                    subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)],
+                                   capture_output=True)
                 else:
-                    os.killpg(pid, signal.SIGTERM)
+                    os.killpg(os.getpgid(pid), signal.SIGTERM)
             except Exception:
                 pass
         db.update("training_task", {
@@ -211,24 +216,36 @@ class TrainingManager:
         pid = task["pid"]
         if pid is None:
             return None
+        exited = False
+        exit_code = None
         try:
-            import ctypes
-            kernel32 = ctypes.windll.kernel32
-            handle = kernel32.OpenProcess(0x0400, False, pid)
-            if handle:
-                code = ctypes.c_ulong()
-                kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
-                kernel32.CloseHandle(handle)
-                if code.value != 259:  # STILL_ACTIVE
-                    status = "completed" if code.value == 0 else "failed"
-                    db = get_db()
-                    db.update("training_task", {
-                        "status": status,
-                        "finished_at": _now(),
-                    }, "id = ?", (task_id,))
-                    return status
+            if sys.platform == "win32":
+                import ctypes
+                kernel32 = ctypes.windll.kernel32
+                handle = kernel32.OpenProcess(0x0400, False, pid)
+                if handle:
+                    code = ctypes.c_ulong()
+                    kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+                    kernel32.CloseHandle(handle)
+                    if code.value != 259:  # STILL_ACTIVE
+                        exited = True
+                        exit_code = code.value
+            else:
+                wpid, status = os.waitpid(pid, os.WNOHANG)
+                if wpid == pid:
+                    exited = True
+                    exit_code = os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
         except Exception:
             pass
+
+        if exited:
+            status = "completed" if exit_code == 0 else "failed"
+            db = get_db()
+            db.update("training_task", {
+                "status": status,
+                "finished_at": _now(),
+            }, "id = ?", (task_id,))
+            return status
         return None
 
     def _build_command(self, task: dict, config: dict) -> list:

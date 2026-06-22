@@ -142,20 +142,23 @@ class Database:
     def fetchall(self, sql: str, params=()):
         return self.conn.execute(sql, params).fetchall()
 
-    def insert(self, table: str, data: dict) -> int:
+    def insert(self, table: str, data: dict, commit: bool = True) -> int:
         columns = ", ".join(data.keys())
         placeholders = ", ".join("?" for _ in data)
         sql = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
         cursor = self.conn.execute(sql, tuple(data.values()))
-        self.conn.commit()
+        if commit:
+            self.conn.commit()
         return cursor.lastrowid
 
-    def update(self, table: str, data: dict, where: str, params=()) -> int:
+    def update(self, table: str, data: dict, where: str, params=(),
+               commit: bool = True) -> int:
         sets = ", ".join(f"{k} = ?" for k in data)
         sql = f"UPDATE {table} SET {sets} WHERE {where}"
         values = tuple(data.values()) + tuple(params)
         cursor = self.conn.execute(sql, values)
-        self.conn.commit()
+        if commit:
+            self.conn.commit()
         return cursor.rowcount
 
 

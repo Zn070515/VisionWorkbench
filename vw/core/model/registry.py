@@ -36,9 +36,10 @@ class ModelRegistry:
             "task_type": task_type,
             "num_classes": num_classes,
             "input_size": input_size,
-        })
-        # 首个版本默认 v1
+        }, commit=False)
+        # 首个版本默认 v1，成功后才一起提交
         self._add_version_internal(row_id, file_path, version=1)
+        db.commit()
         return row_id
 
     def get(self, model_id: int) -> Optional[dict]:

@@ -22,7 +22,7 @@ def init_session():
 def render_controls() -> dict:
     """渲染模型加载和参数控件，返回推理参数."""
     with st.expander("模型 & 参数", expanded=True):
-        col1, col2, col3 = st.columns([2, 1, 1])
+        col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
 
         with col1:
             model_file = st.file_uploader(
@@ -56,9 +56,11 @@ def render_controls() -> dict:
         with col2:
             confidence = st.slider("置信度", 0.0, 1.0, 0.5, 0.05, key="conf_slider")
         with col3:
+            iou = st.slider("IoU (NMS)", 0.0, 1.0, 0.45, 0.05, key="iou_slider")
+        with col4:
             device = st.selectbox("设备", ["cpu", "cuda:0"], key="device_select")
 
-    return {"confidence": confidence, "device": device}
+    return {"confidence": confidence, "iou": iou, "device": device}
 
 
 def render():
@@ -102,6 +104,7 @@ def render():
                     detections = engine.predict(
                         display_img,
                         confidence=params.get("confidence", 0.5),
+                        iou=params.get("iou", 0.45),
                         device=params.get("device", "cpu"),
                     )
                     st.session_state.detections = detections

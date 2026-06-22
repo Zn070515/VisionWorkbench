@@ -64,12 +64,13 @@ class ExperimentManager:
 
     def link_task(self, experiment_id: int, task_id: int):
         db = get_db()
+        import sqlite3
         try:
             db.insert("experiment_task", {
                 "experiment_id": experiment_id,
                 "task_id": task_id,
             })
-        except Exception:
+        except sqlite3.IntegrityError:
             pass  # 已存在则忽略
 
     def unlink_task(self, experiment_id: int, task_id: int):

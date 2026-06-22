@@ -166,7 +166,8 @@ def _render_video_demo(engine: InferenceEngine, conf: float):
                         "image": engine.draw_detections(display, detections),
                     })
                 frame_idx += 1
-                progress.progress(min(frame_idx / total_frames, 1.0))
+                if total_frames > 0:
+                    progress.progress(min(frame_idx / total_frames, 1.0))
 
             cap.release()
             st.session_state.demo_video_frames = frames_data

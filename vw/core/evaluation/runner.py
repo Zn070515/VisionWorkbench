@@ -69,6 +69,7 @@ class EvaluationRunner:
 
         results = {
             "total_images": len(image_files),
+            "skipped_images": 0,
             "total_gt_boxes": 0,
             "total_pred_boxes": 0,
             "true_positives": 0,
@@ -81,6 +82,7 @@ class EvaluationRunner:
         for img_path in image_files:
             image = cv2.imread(str(img_path))
             if image is None:
+                results["skipped_images"] += 1
                 continue
             h, w = image.shape[:2]
 
@@ -132,7 +134,6 @@ class EvaluationRunner:
         fn = results["false_negatives"]
         results["precision"] = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         results["recall"] = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        results["mAP"] = results["true_positives"] / max(results["total_gt_boxes"], 1)
         results["valid"] = True
 
         return results
