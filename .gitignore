@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VisionWorkbench workspace (user data)
+~/visionworkbench/
+
+# Model & dataset files
+*.pt
+*.pth
+*.onnx
+*.engine
+datasets/
+
+# Test cache
+.pytest_cache/
+.tox/
+
+# Env
+.env

@@ -1,0 +1,29 @@
+[project]
+name = "visionworkbench"
+version = "0.1.0"
+description = "轻量级本地优先 AI 视觉研发工作台"
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit>=1.28",
+    "opencv-python>=4.8",
+    "plotly>=5.18",
+    "pandas>=2.0",
+    "pillow>=10.0",
+    "pyyaml>=6.0",
+    "numpy>=1.24",
+    "ultralytics>=8.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+cuda = ["torch>=2.11; sys_platform == 'win32'"]
+
+[project.scripts]
+vw = "vw.cli:main"
+
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["vw*"]

@@ -1,0 +1,14 @@
+# VisionWorkbench 默认配置
+ui:
+  theme: "light"
+  page_title: "VisionWorkbench"
+  layout: "wide"
+  sidebar_expanded: true
+
+inference:
+  confidence: 0.5
+  iou: 0.45
+  device: "cpu"
+
+workspace:
+  dir_name: "visionworkbench"
