@@ -170,3 +170,11 @@ def get_db(path: str | Path = None) -> Database:
         _db_instance = Database(path)
         _db_instance.init()
     return _db_instance
+
+
+def reset_db():
+    """关闭并重置数据库单例（测试用）."""
+    global _db_instance
+    if _db_instance:
+        _db_instance.close()
+    _db_instance = None

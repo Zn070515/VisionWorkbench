@@ -6,6 +6,14 @@ from pathlib import Path
 import pytest
 
 from vw.core.dataset.validator import validate_dataset, ValidationResult
+from vw.infrastructure.database import reset_db
+
+
+@pytest.fixture(autouse=True)
+def _reset_db():
+    reset_db()
+    yield
+    reset_db()
 
 
 def create_yolo_dataset(tmp_path: Path, valid: bool = True):

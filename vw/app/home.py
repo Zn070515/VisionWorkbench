@@ -39,7 +39,11 @@ def render_controls() -> dict:
                 engine: InferenceEngine = st.session_state.engine
                 if engine.model_path != tmp_path:
                     with st.spinner("加载模型中..."):
-                        info = engine.load(tmp_path)
+                        try:
+                            info = engine.load(tmp_path)
+                        except ValueError as e:
+                            st.error(str(e))
+                            return {}
                     st.success(f"已加载: {Path(tmp_path).name} ({info.get('num_classes', '?')} 类)")
 
             elif st.session_state.engine.is_loaded:

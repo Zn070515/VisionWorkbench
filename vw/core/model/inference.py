@@ -35,9 +35,15 @@ class InferenceEngine:
         }
 
     def load(self, model_path: str | Path) -> dict:
-        """加载模型文件，返回模型信息."""
+        """加载模型文件，返回模型信息。非 YOLO 格式抛出 ValueError。"""
         path = str(Path(model_path).resolve())
-        self._model = YOLO(path)
+        try:
+            self._model = YOLO(path)
+        except (TypeError, RuntimeError, FileNotFoundError) as e:
+            raise ValueError(
+                f"无法加载模型文件。请确保上传的是 Ultralytics YOLO 官方权重 (.pt) 文件。\n"
+                f"原始错误: {e}"
+            ) from e
         self._model_path = path
         return self.model_info
 
